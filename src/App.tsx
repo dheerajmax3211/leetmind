@@ -9,23 +9,34 @@ import { AlertCircle } from 'lucide-react';
 
 export default function App() {
   const [appState, setAppState] = useState<'input' | 'loading' | 'experience' | 'error'>('input');
-  const [solutionData, setSolutionData] = useState<LeetMindResponse | null>(null);
+  const [solutionData, setSolutionData] = useState<Partial<LeetMindResponse> | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [lastParams, setLastParams] = useState<{language: Language, vibe: Vibe, provider: AIProvider} | null>(null);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const handleSubmit = async (problemText: string, images: string[], language: Language, vibe: Vibe, provider: AIProvider) => {
     setAppState('loading');
     setErrorMessage('');
+    setIsGenerating(true);
+
+    const handleProgress = (partial: Partial<LeetMindResponse>) => {
+      setSolutionData((prev) => ({ ...prev, ...partial, language }));
+      setAppState('experience');
+    };
     
     try {
       const data = provider === 'Gemini'
-        ? await fetchGeminiSolution(problemText, images, language, vibe)
-        : await fetchLeetMindSolution(problemText, images, language, vibe);
+        ? await fetchGeminiSolution(problemText, images, language, vibe, handleProgress)
+        : await fetchLeetMindSolution(problemText, images, language, vibe, handleProgress);
+      data.language = language;
       setSolutionData(data);
       setAppState('experience');
     } catch (error: any) {
       console.error("Error fetching solution:", error);
       setErrorMessage(error.message || "An unexpected error occurred.");
       setAppState('error');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -33,6 +44,11 @@ export default function App() {
     setAppState('input');
     setSolutionData(null);
     setErrorMessage('');
+  };
+
+  const handleExploreNext = (topic: string) => {
+    if (!lastParams) return;
+    handleSubmit(topic, [], lastParams.language, lastParams.vibe, lastParams.provider);
   };
 
   return (
@@ -46,7 +62,12 @@ export default function App() {
       )}
       
       {appState === 'experience' && solutionData && (
-        <LearningExperience data={solutionData} onReset={handleReset} />
+        <LearningExperience 
+          data={solutionData} 
+          onReset={handleReset} 
+          onExploreNext={handleExploreNext}
+          isStreaming={isGenerating}
+        />
       )}
       
       {appState === 'error' && (

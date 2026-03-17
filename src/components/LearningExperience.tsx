@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer, Compass } from 'lucide-react';
 import { LeetMindResponse } from '../types';
 import { printSolution } from '../utils/printUtils';
-
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 interface LearningExperienceProps {
-  data: LeetMindResponse;
+  data: Partial<LeetMindResponse>;
   onReset: () => void;
+  onExploreNext?: (topic: string) => void;
+  isStreaming?: boolean;
 }
 
-export function LearningExperience({ data, onReset }: LearningExperienceProps) {
+export function LearningExperience({ data, onReset, onExploreNext, isStreaming }: LearningExperienceProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [focusedStep, setFocusedStep] = useState(0);
   const [showFullSolution, setShowFullSolution] = useState(false);
@@ -17,8 +20,16 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [showPrintMenu, setShowPrintMenu] = useState(false);
 
-  const totalSteps = data.steps.length;
-  const isReviewMode = currentStep >= totalSteps;
+  const steps = data.steps || [];
+  const totalSteps = steps.length;
+  const isReviewMode = currentStep >= totalSteps && totalSteps > 0 && !isStreaming;
+
+  // Auto-reveal steps during streaming
+  useEffect(() => {
+    if (isStreaming) {
+      setCurrentStep(totalSteps);
+    }
+  }, [totalSteps, isStreaming]);
 
   // Refs for each step card to enable scroll-into-view
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -103,38 +114,44 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
         </button>
 
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl md:text-3xl font-display font-bold">{data.problemTitle}</h1>
-          <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${
-            data.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-            data.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-            'bg-red-500/20 text-red-400 border border-red-500/30'
-          }`}>
-            {data.difficulty}
-          </span>
-          <span className="px-3 py-1 rounded-full text-xs font-mono bg-white/10 border border-white/20 text-gray-300 flex items-center gap-1">
-            <Zap className="w-3 h-3 text-[var(--color-accent)]" /> {data.approach}
-          </span>
+          <h1 className="text-2xl md:text-3xl font-display font-bold">{data.problemTitle || "Thinking..."}</h1>
+          {data.difficulty && (
+            <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${
+              data.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+              data.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+              'bg-red-500/20 text-red-400 border border-red-500/30'
+            }`}>
+              {data.difficulty}
+            </span>
+          )}
+          {data.approach && (
+            <span className="px-3 py-1 rounded-full text-xs font-mono bg-white/10 border border-white/20 text-gray-300 flex items-center gap-1">
+              <Zap className="w-3 h-3 text-[var(--color-accent)]" /> {data.approach}
+            </span>
+          )}
         </div>
 
         {/* Print button */}
         <div className="relative">
-          <button
-            onClick={() => setShowPrintMenu(v => !v)}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-mono text-sm text-gray-300 hover:text-white transition"
-          >
-            <Printer className="w-4 h-4" /> Download PDF
-          </button>
+          {!isStreaming && (
+            <button
+              onClick={() => setShowPrintMenu(v => !v)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-mono text-sm text-gray-300 hover:text-white transition"
+            >
+              <Printer className="w-4 h-4" /> Download PDF
+            </button>
+          )}
           {showPrintMenu && (
             <div className="absolute right-0 top-full mt-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[170px]">
               <button
-                onClick={() => { setShowPrintMenu(false); printSolution(data, 'color'); }}
+                onClick={() => { setShowPrintMenu(false); printSolution(data as LeetMindResponse, 'color'); }}
                 className="w-full flex items-center gap-2 px-4 py-3 text-sm font-mono text-gray-300 hover:text-white hover:bg-white/5 transition"
               >
                 🎨 Color PDF
               </button>
               <div className="h-px bg-white/10" />
               <button
-                onClick={() => { setShowPrintMenu(false); printSolution(data, 'bw'); }}
+                onClick={() => { setShowPrintMenu(false); printSolution(data as LeetMindResponse, 'bw'); }}
                 className="w-full flex items-center gap-2 px-4 py-3 text-sm font-mono text-gray-300 hover:text-white hover:bg-white/5 transition"
               >
                 ⬜ Black &amp; White
@@ -153,8 +170,11 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
           className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8"
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-secondary)] opacity-50"></div>
-          <p className="text-lg md:text-xl font-display text-gray-300 leading-relaxed">
-            {data.storyIntro}
+          <p className="text-lg md:text-xl font-display text-gray-300 leading-relaxed min-h-[3rem]">
+            {data.storyIntro || (isStreaming ? "Analyzing your request..." : "")}
+            {isStreaming && (!data.storyIntro) && (
+              <span className="inline-block w-2.5 h-4 ml-1 bg-[var(--color-accent)] animate-pulse" />
+            )}
           </p>
         </motion.div>
 
@@ -185,8 +205,8 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
 
         {/* Steps */}
         <div className="space-y-8 relative before:absolute before:inset-0 before:ml-6 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
-          {data.steps.map((step, index) => {
-            const isRevealed = index < currentStep;
+          {steps.map((step, index) => {
+            const isRevealed = isStreaming ? true : index < currentStep;
             const isCurrent = index === currentStep;
             const isFocused = isReviewMode && index === focusedStep;
 
@@ -221,11 +241,16 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
                 >
                   <h3 className="text-xl font-display font-bold mb-3 flex items-center gap-2">
                     <span className="text-[var(--color-accent)] font-mono text-sm">{(index + 1).toString().padStart(2, '0')}</span>
-                    {step.title}
+                    {step.title || "Generating step..."}
                   </h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">{step.explanation}</p>
+                  <p className="text-gray-400 mb-6 leading-relaxed">
+                    {step.explanation}
+                    {isStreaming && index === steps.length - 1 && (
+                      <span className="inline-block w-2 h-4 ml-1 bg-gray-500 animate-pulse" />
+                    )}
+                  </p>
 
-                  {isRevealed && (
+                  {isRevealed && step.code && (
                     <div className="rounded-xl overflow-hidden border border-white/5 bg-black/50">
                       <div className="flex items-center px-4 py-2 bg-white/5 border-b border-white/5">
                         <div className="flex gap-1.5">
@@ -234,9 +259,15 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
                           <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
                         </div>
                       </div>
-                      <pre className="p-4 overflow-x-auto font-mono text-sm text-gray-300">
-                        <code>{step.code}</code>
-                      </pre>
+                      <div className="overflow-x-auto bg-[#1e1e1e]">
+                        <SyntaxHighlighter
+                          language={(data.language || 'javascript').toLowerCase()}
+                          style={vscDarkPlus}
+                          customStyle={{ margin: 0, padding: '1rem', background: 'transparent', fontSize: '0.875rem' }}
+                        >
+                          {step.code}
+                        </SyntaxHighlighter>
+                      </div>
                     </div>
                   )}
                 </motion.div>
@@ -264,7 +295,7 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
         )}
 
         {/* Full Solution & Extras */}
-        {currentStep >= totalSteps && (
+        {!isStreaming && currentStep >= totalSteps && totalSteps > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -280,44 +311,52 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
             </div>
 
             {/* Complexity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
-                  <Zap className="w-6 h-6" />
+            {data.complexityBreakdown && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-gray-400 font-mono text-sm">Time Complexity</p>
+                      <p className="text-2xl font-mono font-bold text-white">{data.complexityBreakdown.time || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-gray-400 font-mono text-sm">Space Complexity</p>
+                      <p className="text-2xl font-mono font-bold text-white">{data.complexityBreakdown.space || "N/A"}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-400 font-mono text-sm">Time Complexity</p>
-                  <p className="text-2xl font-mono font-bold text-white">{data.complexityBreakdown.time}</p>
-                </div>
-              </div>
-              <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
-                  <BookOpen className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-gray-400 font-mono text-sm">Space Complexity</p>
-                  <p className="text-2xl font-mono font-bold text-white">{data.complexityBreakdown.space}</p>
-                </div>
-              </div>
-            </div>
-            <p className="text-center text-gray-400 italic">{data.complexityBreakdown.explanation}</p>
+                <p className="text-center text-gray-400 italic">{data.complexityBreakdown.explanation}</p>
+              </>
+            )}
 
             {/* Tips & Facts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-orange-500/10 border border-orange-500/20 p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                <h4 className="text-orange-400 font-display font-bold flex items-center gap-2 mb-3">
-                  <Lightbulb className="w-5 h-5" /> Pro Tip
-                </h4>
-                <p className="text-orange-100/80 leading-relaxed relative z-10">{data.proTip}</p>
-              </div>
-              <div className="bg-teal-500/10 border border-teal-500/20 p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                <h4 className="text-teal-400 font-display font-bold flex items-center gap-2 mb-3">
-                  <Trophy className="w-5 h-5" /> Fun Fact
-                </h4>
-                <p className="text-teal-100/80 leading-relaxed relative z-10">{data.funFact}</p>
-              </div>
+              {data.proTip && (
+                <div className="bg-orange-500/10 border border-orange-500/20 p-6 rounded-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                  <h4 className="text-orange-400 font-display font-bold flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-5 h-5" /> Pro Tip
+                  </h4>
+                  <p className="text-orange-100/80 leading-relaxed relative z-10">{data.proTip}</p>
+                </div>
+              )}
+              {data.funFact && (
+                <div className="bg-teal-500/10 border border-teal-500/20 p-6 rounded-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                  <h4 className="text-teal-400 font-display font-bold flex items-center gap-2 mb-3">
+                    <Trophy className="w-5 h-5" /> Fun Fact
+                  </h4>
+                  <p className="text-teal-100/80 leading-relaxed relative z-10">{data.funFact}</p>
+                </div>
+              )}
             </div>
 
             {/* Full Solution Reveal */}
@@ -345,12 +384,57 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
                       {copied ? 'Copied!' : 'Copy Code'}
                     </button>
                   </div>
-                  <pre className="p-6 overflow-x-auto font-mono text-sm text-green-400/90 leading-relaxed">
-                    <code>{data.fullSolution}</code>
-                  </pre>
+                  {data.fullSolution ? (
+                    <div className="overflow-x-auto bg-[#1e1e1e]">
+                      <SyntaxHighlighter
+                        language={(data.language || 'javascript').toLowerCase()}
+                        style={vscDarkPlus}
+                        customStyle={{ margin: 0, padding: '1.5rem', background: 'transparent', fontSize: '0.875rem', lineHeight: '1.6' }}
+                      >
+                        {data.fullSolution}
+                      </SyntaxHighlighter>
+                    </div>
+                  ) : (
+                    <div className="p-6 text-gray-400 text-sm font-mono italic">No full solution provided.</div>
+                  )}
                 </motion.div>
               )}
             </div>
+
+            {/* Next Steps */}
+            {data.nextSteps && data.nextSteps.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="pt-8 space-y-4"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--color-accent)]/20 flex items-center justify-center text-[var(--color-accent)]">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-display font-bold text-white">Explore Next</h4>
+                    <p className="text-sm font-mono text-gray-400">Deepen your understanding</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {data.nextSteps.map((step, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => onExploreNext?.(step)}
+                      className="text-left p-5 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 hover:border-[var(--color-accent)]/50 hover:bg-white/10 transition-all group relative overflow-hidden flex flex-col gap-2"
+                    >
+                      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                        <ChevronRight className="w-5 h-5 text-[var(--color-accent)]" />
+                      </div>
+                      <span className="font-mono text-[var(--color-accent)] text-xs">Option {idx + 1}</span>
+                      <span className="font-display font-bold text-gray-200 group-hover:text-white transition-colors">{step}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         )}
       </main>

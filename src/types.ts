@@ -22,6 +22,8 @@ export interface LeetMindResponse {
   complexityBreakdown: ComplexityBreakdown;
   proTip: string;
   funFact: string;
+  language?: string;
+  nextSteps?: string[];
 }
 
 export type Vibe = "Concise" | "Detailed" | "Interview";

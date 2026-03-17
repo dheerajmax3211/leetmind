@@ -27,16 +27,30 @@ async function startServer() {
           "x-api-key": apiKey,
           "anthropic-version": "2023-06-01"
         },
-        body: JSON.stringify(req.body)
+        body: JSON.stringify({ ...req.body, stream: true })
       });
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        return res.status(response.status).json({ error: errorData?.error?.message || `API Error: ${response.status}` });
+        res.write(`data: ${JSON.stringify({ error: errorData?.error?.message || ('API Error: ' + response.status) })}\n\n`);
+        return res.end();
       }
 
-      const data = await response.json();
-      res.json(data);
+      if (response.body) {
+        const reader = response.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(value); // value is Uint8Array of SSE data from Anthropic
+        }
+        res.end();
+      } else {
+        res.end();
+      }
     } catch (error: any) {
       console.error("Error in /api/claude:", error);
       res.status(500).json({ error: error.message || "Internal Server Error" });
@@ -54,7 +68,7 @@ async function startServer() {
       const { systemPrompt, parts } = req.body;
 
       const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
+      const responseStream = await ai.models.generateContentStream({
         model: "gemini-3-flash-preview",
         config: {
           systemInstruction: systemPrompt,
@@ -68,7 +82,16 @@ async function startServer() {
         ],
       });
 
-      res.json({ text: response.text });
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      for await (const chunk of responseStream) {
+        if (chunk.text) {
+          res.write(`data: ${JSON.stringify({ text: chunk.text })}\n\n`);
+        }
+      }
+      res.end();
     } catch (error: any) {
       console.error("Error in /api/gemini:", error);
       res.status(500).json({ error: error.message || "Internal Server Error" });

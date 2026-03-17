@@ -133,9 +133,9 @@ export function InputStudio({ onSubmit }: InputStudioProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
           {/* Language Selector */}
-          <div className="space-y-3">
+          <div className="space-y-3 md:col-span-3">
             <label className="text-gray-400 font-mono text-sm flex items-center gap-2">
               <Code2 className="w-4 h-4" /> Language
             </label>
@@ -151,16 +151,16 @@ export function InputStudio({ onSubmit }: InputStudioProps) {
           </div>
 
           {/* Vibe Toggle */}
-          <div className="space-y-3">
+          <div className="space-y-3 md:col-span-5">
             <label className="text-gray-400 font-mono text-sm flex items-center gap-2">
               <Zap className="w-4 h-4" /> Choose your vibe
             </label>
-            <div className="flex gap-2 bg-[#1a1a1a] p-2 rounded-xl border border-white/10">
+            <div className="flex gap-1 lg:gap-2 bg-[#1a1a1a] p-1.5 lg:p-2 rounded-xl border border-white/10">
               {VIBES.map(({ value, icon: Icon, label }) => (
                 <button
                   key={value}
                   onClick={() => setVibe(value)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg font-mono text-xs transition-all whitespace-nowrap ${
+                  className={`flex-1 flex items-center justify-center gap-1 lg:gap-1.5 py-2 px-1 lg:px-2 rounded-lg font-mono text-xs transition-all whitespace-nowrap ${
                     vibe === value 
                       ? 'bg-[var(--color-accent)] text-black font-bold shadow-[0_0_15px_rgba(0,255,136,0.3)]' 
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -174,7 +174,7 @@ export function InputStudio({ onSubmit }: InputStudioProps) {
           </div>
 
           {/* AI Provider Toggle */}
-          <div className="space-y-3">
+          <div className="space-y-3 md:col-span-4">
             <label className="text-gray-400 font-mono text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4" /> AI Engine
             </label>
