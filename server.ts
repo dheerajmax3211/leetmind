@@ -55,7 +55,7 @@ async function startServer() {
 
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-04-17",
+        model: "gemini-3-flash-preview",
         config: {
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
