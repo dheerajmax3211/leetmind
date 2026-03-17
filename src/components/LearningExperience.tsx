@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Lock, Unlock, Zap, Lightbulb, Trophy, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Lock, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown } from 'lucide-react';
 import { LeetMindResponse } from '../types';
 
 interface LearningExperienceProps {
@@ -10,22 +10,65 @@ interface LearningExperienceProps {
 
 export function LearningExperience({ data, onReset }: LearningExperienceProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [focusedStep, setFocusedStep] = useState(0);
   const [showFullSolution, setShowFullSolution] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
   const totalSteps = data.steps.length;
+  const isReviewMode = currentStep >= totalSteps;
 
+  // Refs for each step card to enable scroll-into-view
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Auto-scroll to the newly revealed step when spacebar advances it
+  useEffect(() => {
+    if (currentStep > 0 && currentStep <= totalSteps) {
+      stepRefs.current[currentStep - 1]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [currentStep, totalSteps]);
+
+  // Scroll to focused step when navigating with arrow keys in review mode
+  const hasInteractedReview = useRef(false);
+  useEffect(() => {
+    if (!hasInteractedReview.current) return;
+    stepRefs.current[focusedStep]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, [focusedStep]);
+
+  // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Space: reveal next step
       if (e.code === 'Space' && currentStep < totalSteps) {
         e.preventDefault();
         setCurrentStep(prev => prev + 1);
+        return;
+      }
+
+      // Arrow keys: review mode navigation (only after all steps unlocked)
+      if (isReviewMode) {
+        if (e.code === 'ArrowDown') {
+          e.preventDefault();
+          hasInteractedReview.current = true;
+          setFocusedStep(prev => Math.min(prev + 1, totalSteps - 1));
+        }
+        if (e.code === 'ArrowUp') {
+          e.preventDefault();
+          hasInteractedReview.current = true;
+          setFocusedStep(prev => Math.max(prev - 1, 0));
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, totalSteps]);
+  }, [currentStep, totalSteps, isReviewMode]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(data.fullSolution);
@@ -40,7 +83,7 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: "100%" }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 120 }}
@@ -50,13 +93,13 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
 
       {/* Header */}
       <header className="max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-12">
-        <button 
+        <button
           onClick={onReset}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition font-mono text-sm"
         >
           <ArrowLeft className="w-4 h-4" /> New Problem
         </button>
-        
+
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl md:text-3xl font-display font-bold">{data.problemTitle}</h1>
           <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${
@@ -73,15 +116,15 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
       </header>
 
       <main className="max-w-3xl mx-auto space-y-12 pb-32">
-        {/* Story Intro */}
-        <motion.div 
+        {/* Problem Overview */}
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
           className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8"
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-secondary)] opacity-50"></div>
-          <p className="text-lg md:text-xl font-display italic text-gray-300 leading-relaxed">
+          <p className="text-lg md:text-xl font-display text-gray-300 leading-relaxed">
             {data.storyIntro}
           </p>
         </motion.div>
@@ -90,10 +133,19 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
         <div className="sticky top-4 z-10 bg-[var(--color-bg)]/80 backdrop-blur-md py-4 border-b border-white/10">
           <div className="flex justify-between items-center mb-2 font-mono text-sm text-gray-400">
             <span>Progress</span>
-            <span>Step {Math.min(currentStep, totalSteps)} of {totalSteps}</span>
+            <div className="flex items-center gap-3">
+              {isReviewMode && (
+                <span className="flex items-center gap-1.5 text-[var(--color-accent)] text-xs">
+                  <ArrowUp className="w-3 h-3" />
+                  <ArrowDown className="w-3 h-3" />
+                  <span>Review mode</span>
+                </span>
+              )}
+              <span>Step {Math.min(currentStep, totalSteps)} of {totalSteps}</span>
+            </div>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               className="h-full bg-[var(--color-accent)]"
               initial={{ width: 0 }}
               animate={{ width: `${(Math.min(currentStep, totalSteps) / totalSteps) * 100}%` }}
@@ -107,9 +159,14 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
           {data.steps.map((step, index) => {
             const isRevealed = index < currentStep;
             const isCurrent = index === currentStep;
+            const isFocused = isReviewMode && index === focusedStep;
 
             return (
-              <div key={step.stepNumber} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div
+                key={step.stepNumber}
+                ref={el => { stepRefs.current[index] = el; }}
+                className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
+              >
                 {/* Timeline dot */}
                 <div className={`flex items-center justify-center w-12 h-12 rounded-full border-4 border-[var(--color-bg)] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm transition-colors duration-500 ${
                   isRevealed ? 'bg-[var(--color-accent)] text-black' : 'bg-[#1a1a1a] text-gray-500'
@@ -118,15 +175,19 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
                 </div>
 
                 {/* Card */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: index % 2 === 0 ? 50 : -50 }}
-                  animate={{ 
-                    opacity: isRevealed ? 1 : 0.3, 
+                  animate={{
+                    opacity: isRevealed ? 1 : 0.3,
                     x: isRevealed ? 0 : (index % 2 === 0 ? 20 : -20),
                     filter: isRevealed ? 'blur(0px)' : 'blur(4px)'
                   }}
                   className={`w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-2xl border transition-all duration-500 ${
-                    isCurrent ? 'border-[var(--color-accent)] shadow-[0_0_20px_rgba(0,255,136,0.1)]' : 'border-white/10 bg-[#1a1a1a]'
+                    isFocused
+                      ? 'border-[var(--color-accent)] shadow-[0_0_25px_rgba(0,255,136,0.2)] ring-1 ring-[var(--color-accent)]/30'
+                      : isCurrent
+                      ? 'border-[var(--color-accent)]/50 shadow-[0_0_15px_rgba(0,255,136,0.08)]'
+                      : 'border-white/10 bg-[#1a1a1a]'
                   }`}
                 >
                   <h3 className="text-xl font-display font-bold mb-3 flex items-center gap-2">
@@ -134,7 +195,7 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
                     {step.title}
                   </h3>
                   <p className="text-gray-400 mb-6 leading-relaxed">{step.explanation}</p>
-                  
+
                   {isRevealed && (
                     <div className="rounded-xl overflow-hidden border border-white/5 bg-black/50">
                       <div className="flex items-center px-4 py-2 bg-white/5 border-b border-white/5">
@@ -157,10 +218,10 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
 
         {/* Next Step Button */}
         {currentStep < totalSteps && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex justify-center mt-12"
+            className="flex flex-col items-center gap-3 mt-12"
           >
             <button
               onClick={() => setCurrentStep(prev => prev + 1)}
@@ -169,17 +230,26 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
               Reveal Step {currentStep + 1}
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <p className="absolute mt-16 text-gray-500 font-mono text-xs">or press Spacebar</p>
+            <p className="text-gray-500 font-mono text-xs">or press Spacebar</p>
           </motion.div>
         )}
 
         {/* Full Solution & Extras */}
         {currentStep >= totalSteps && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8 mt-16"
           >
+            {/* Review mode hint */}
+            <div className="flex justify-center">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20 font-mono text-xs text-[var(--color-accent)]">
+                <ArrowUp className="w-3.5 h-3.5" />
+                <ArrowDown className="w-3.5 h-3.5" />
+                <span>Use arrow keys to revisit any step</span>
+              </div>
+            </div>
+
             {/* Complexity */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl flex items-center gap-4">
@@ -231,14 +301,14 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
                   <Unlock className="w-6 h-6" /> Unlock Full Solution
                 </button>
               ) : (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   className="rounded-2xl overflow-hidden border border-white/20 bg-[#0a0a0a]"
                 >
                   <div className="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/10">
                     <span className="font-mono text-sm text-gray-400">Optimal Solution</span>
-                    <button 
+                    <button
                       onClick={handleCopy}
                       className="flex items-center gap-2 text-sm font-mono text-gray-400 hover:text-white transition"
                     >
@@ -259,7 +329,6 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
   );
 }
 
-// Simple CSS Confetti Component
 function Confetti() {
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
