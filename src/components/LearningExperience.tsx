@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Lock, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer } from 'lucide-react';
 import { LeetMindResponse } from '../types';
+import { printSolution } from '../utils/printUtils';
 
 interface LearningExperienceProps {
   data: LeetMindResponse;
@@ -14,6 +15,7 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
   const [showFullSolution, setShowFullSolution] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
 
   const totalSteps = data.steps.length;
   const isReviewMode = currentStep >= totalSteps;
@@ -112,6 +114,33 @@ export function LearningExperience({ data, onReset }: LearningExperienceProps) {
           <span className="px-3 py-1 rounded-full text-xs font-mono bg-white/10 border border-white/20 text-gray-300 flex items-center gap-1">
             <Zap className="w-3 h-3 text-[var(--color-accent)]" /> {data.approach}
           </span>
+        </div>
+
+        {/* Print button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowPrintMenu(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-mono text-sm text-gray-300 hover:text-white transition"
+          >
+            <Printer className="w-4 h-4" /> Download PDF
+          </button>
+          {showPrintMenu && (
+            <div className="absolute right-0 top-full mt-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[170px]">
+              <button
+                onClick={() => { setShowPrintMenu(false); printSolution(data, 'color'); }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-mono text-gray-300 hover:text-white hover:bg-white/5 transition"
+              >
+                🎨 Color PDF
+              </button>
+              <div className="h-px bg-white/10" />
+              <button
+                onClick={() => { setShowPrintMenu(false); printSolution(data, 'bw'); }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-mono text-gray-300 hover:text-white hover:bg-white/5 transition"
+              >
+                ⬜ Black &amp; White
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
