@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -22,8 +23,7 @@ async function startServer() {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"
+          "anthropic-version": "2023-06-01"
         },
         body: JSON.stringify(req.body)
       });
@@ -53,7 +53,7 @@ async function startServer() {
 
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-1.5-flash",
         config: {
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
