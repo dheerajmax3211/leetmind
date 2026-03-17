@@ -1,0 +1,5 @@
+{
+  "name": "LeetMind",
+  "description": "An interactive, gamified LeetCode problem tutor using Claude API.",
+  "requestFramePermissions": []
+}
