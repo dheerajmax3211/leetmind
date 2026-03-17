@@ -24,6 +24,6 @@ export interface LeetMindResponse {
   funFact: string;
 }
 
-export type Vibe = "Gamer Mode" | "Story Mode" | "Speed Mode";
+export type Vibe = "Concise" | "Detailed" | "Interview";
 export type Language = "Python" | "JavaScript" | "Java" | "C++" | "Go" | "Rust" | "TypeScript";
 export type AIProvider = "Claude" | "Gemini";

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Upload, X, Code2, Gamepad2, BookOpen, Zap, Brain, Sparkles } from 'lucide-react';
+import { Upload, X, Code2, Zap, BookOpen, Briefcase, Brain, Sparkles } from 'lucide-react';
 import { Language, Vibe, AIProvider } from '../types';
 
 interface InputStudioProps {
@@ -9,9 +9,9 @@ interface InputStudioProps {
 
 const LANGUAGES: Language[] = ["Python", "JavaScript", "Java", "C++", "Go", "Rust", "TypeScript"];
 const VIBES: { value: Vibe; icon: React.ElementType; label: string }[] = [
-  { value: "Gamer Mode", icon: Gamepad2, label: "Gamer Mode" },
-  { value: "Story Mode", icon: BookOpen, label: "Story Mode" },
-  { value: "Speed Mode", icon: Zap, label: "Speed Mode" },
+  { value: "Concise",  icon: Zap,       label: "Concise"   },
+  { value: "Detailed", icon: BookOpen,   label: "Detailed"  },
+  { value: "Interview",icon: Briefcase,  label: "Interview" },
 ];
 
 const PROVIDERS: { value: AIProvider; label: string; icon: React.ElementType; color: string; activeClass: string }[] = [
@@ -35,7 +35,7 @@ export function InputStudio({ onSubmit }: InputStudioProps) {
   const [problemText, setProblemText] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [language, setLanguage] = useState<Language>("Python");
-  const [vibe, setVibe] = useState<Vibe>("Gamer Mode");
+  const [vibe, setVibe] = useState<Vibe>("Concise");
   const [provider, setProvider] = useState<AIProvider>("Claude");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,14 +160,14 @@ export function InputStudio({ onSubmit }: InputStudioProps) {
                 <button
                   key={value}
                   onClick={() => setVibe(value)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg font-mono text-xs transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg font-mono text-xs transition-all whitespace-nowrap ${
                     vibe === value 
                       ? 'bg-[var(--color-accent)] text-black font-bold shadow-[0_0_15px_rgba(0,255,136,0.3)]' 
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{label}</span>
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
