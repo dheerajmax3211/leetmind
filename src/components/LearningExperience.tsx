@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer, Compass } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer, Compass } from 'lucide-react';
 import { LeetMindResponse } from '../types';
 import { printSolution } from '../utils/printUtils';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Maximize2, Minimize2, X } from 'lucide-react';
 interface LearningExperienceProps {
   data: Partial<LeetMindResponse>;
   onReset: () => void;
@@ -19,17 +20,16 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showPrintMenu, setShowPrintMenu] = useState(false);
+  const [fullScreenStep, setFullScreenStep] = useState<number | null>(null);
 
   const steps = data.steps || [];
   const totalSteps = steps.length;
+  // During streaming, we only allow review mode if the final JSON is completely received
+  // However, keeping simple logic: review mode unlocks when currentStep >= totalSteps and we have at least 1 step.
   const isReviewMode = currentStep >= totalSteps && totalSteps > 0 && !isStreaming;
 
-  // Auto-reveal steps during streaming
-  useEffect(() => {
-    if (isStreaming) {
-      setCurrentStep(totalSteps);
-    }
-  }, [totalSteps, isStreaming]);
+  // We intentionally do NOT auto-reveal steps during streaming anymore.
+  // The user should still click or press Space to reveal them at their own pace.
 
   // Refs for each step card to enable scroll-into-view
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -77,11 +77,42 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
           setFocusedStep(prev => Math.max(prev - 1, 0));
         }
       }
+      
+      // Escape: close full screen step
+      if (e.code === 'Escape' && fullScreenStep !== null) {
+        setFullScreenStep(null);
+        return;
+      }
+
+      // Arrow keys in full screen navigate between revealed steps
+      if (fullScreenStep !== null) {
+        if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          // advance to next revealed step; reveal next if not yet revealed
+          setFullScreenStep(prev => {
+            if (prev === null) return null;
+            const next = prev + 1;
+            if (next < totalSteps) {
+              if (next >= currentStep) {
+                // also unlock the step in the main view
+                setCurrentStep(next + 1);
+              }
+              return next;
+            }
+            return prev;
+          });
+        }
+        if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          setFullScreenStep(prev => (prev !== null && prev > 0 ? prev - 1 : prev));
+        }
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, totalSteps, isReviewMode]);
+  }, [currentStep, totalSteps, isReviewMode, fullScreenStep]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(data.fullSolution);
@@ -206,7 +237,7 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
         {/* Steps */}
         <div className="space-y-8 relative before:absolute before:inset-0 before:ml-6 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
           {steps.map((step, index) => {
-            const isRevealed = isStreaming ? true : index < currentStep;
+            const isRevealed = index < currentStep;
             const isCurrent = index === currentStep;
             const isFocused = isReviewMode && index === focusedStep;
 
@@ -231,7 +262,7 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
                     x: isRevealed ? 0 : (index % 2 === 0 ? 20 : -20),
                     filter: isRevealed ? 'blur(0px)' : 'blur(4px)'
                   }}
-                  className={`w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-2xl border transition-all duration-500 ${
+                  className={`w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-2xl border transition-all duration-500 relative group/card ${
                     isFocused
                       ? 'border-[var(--color-accent)] shadow-[0_0_25px_rgba(0,255,136,0.2)] ring-1 ring-[var(--color-accent)]/30'
                       : isCurrent
@@ -239,7 +270,16 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
                       : 'border-white/10 bg-[#1a1a1a]'
                   }`}
                 >
-                  <h3 className="text-xl font-display font-bold mb-3 flex items-center gap-2">
+                  {isRevealed && (
+                    <button 
+                      onClick={() => setFullScreenStep(index)}
+                      className="absolute top-4 right-4 p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-opacity opacity-0 group-hover/card:opacity-100"
+                      title="View Full Screen"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  <h3 className="text-xl font-display font-bold mb-3 flex items-center gap-2 pr-8">
                     <span className="text-[var(--color-accent)] font-mono text-sm">{(index + 1).toString().padStart(2, '0')}</span>
                     {step.title || "Generating step..."}
                   </h3>
@@ -438,6 +478,108 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
           </motion.div>
         )}
       </main>
+
+      {/* Full Screen Step Modal */}
+      <AnimatePresence>
+        {fullScreenStep !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/80 backdrop-blur-sm"
+            onClick={() => setFullScreenStep(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-5xl max-h-[90vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full border-4 border-black bg-[var(--color-accent)] text-black font-bold text-xl">
+                    {steps[fullScreenStep].emoji}
+                  </div>
+                  <h2 className="text-2xl font-display font-bold text-white">
+                    <span className="text-[var(--color-accent)] font-mono text-lg mr-3">
+                      {(fullScreenStep + 1).toString().padStart(2, '0')}
+                    </span>
+                    {steps[fullScreenStep].title}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setFullScreenStep(null)}
+                    className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-gray-400 hover:text-white"
+                  >
+                    <Minimize2 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setFullScreenStep(null)}
+                    className="p-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-colors text-red-500"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+                <p className="text-xl md:text-2xl text-gray-300 leading-relaxed font-display">
+                  {steps[fullScreenStep].explanation}
+                </p>
+                {steps[fullScreenStep].code && (
+                  <div className="rounded-xl overflow-hidden border border-white/10 bg-black/50">
+                    <div className="flex items-center px-4 py-3 bg-white/5 border-b border-white/10">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto bg-[#1e1e1e]">
+                      <SyntaxHighlighter
+                        language={(data.language || 'javascript').toLowerCase()}
+                        style={vscDarkPlus}
+                        customStyle={{ margin: 0, padding: '2rem', background: 'transparent', fontSize: '1rem', lineHeight: '1.6' }}
+                      >
+                        {steps[fullScreenStep].code}
+                      </SyntaxHighlighter>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation Footer */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-white/5">
+                <button
+                  onClick={() => setFullScreenStep(prev => (prev !== null && prev > 0 ? prev - 1 : prev))}
+                  disabled={fullScreenStep === 0}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-sm bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Prev Step
+                </button>
+                <span className="font-mono text-xs text-gray-500">
+                  {fullScreenStep + 1} / {Math.max(currentStep, fullScreenStep + 1)}
+                  <span className="ml-2 opacity-50">← →</span>
+                </span>
+                <button
+                  onClick={() => {
+                    const next = fullScreenStep + 1;
+                    if (next < totalSteps) {
+                      if (next >= currentStep) setCurrentStep(next + 1);
+                      setFullScreenStep(next);
+                    }
+                  }}
+                  disabled={fullScreenStep >= totalSteps - 1}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-sm bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30 text-[var(--color-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  Next Step <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

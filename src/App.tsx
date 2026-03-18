@@ -18,6 +18,7 @@ export default function App() {
     setAppState('loading');
     setErrorMessage('');
     setIsGenerating(true);
+    setLastParams({ language, vibe, provider });
 
     const handleProgress = (partial: Partial<LeetMindResponse>) => {
       setSolutionData((prev) => ({ ...prev, ...partial, language }));

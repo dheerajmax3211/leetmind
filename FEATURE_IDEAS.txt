@@ -1,0 +1,148 @@
+LeetMind — Feature Ideas for Top-Tier Interview Prep
+======================================================
+Goal: Train someone well enough to land a job at Google, Amazon, Microsoft, Meta, Apple, etc.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM SOLVING & LEARNING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Pattern Library
+   A curated, organized library of the 15-20 core algorithmic patterns
+   (Sliding Window, Two Pointers, BFS/DFS, Dynamic Programming, Backtracking, etc.).
+   Each pattern has a theory page, a set of classic problems that use it, and a
+   visual diagram. Users learn the pattern once and recognize it across many problems.
+
+2. Spaced Repetition Review Queue
+   Tracks which problems/topics the user has studied and surfaces them again at
+   scientifically optimal intervals (like Anki). Problems you find hard come back
+   sooner; easy ones are pushed further. Great for long-term retention before an interview.
+
+3. Blind 75 / Neetcode 150 Curated Tracks
+   Pre-built study tracks based on the most famous interview prep lists. One-click
+   to start a track, and LeetMind will walk you through each problem step-by-step
+   in your chosen vibe (Concise/Detailed/Interview). Tracks include Google, Amazon,
+   and Meta-specific variants.
+
+4. Mock Interview Simulator
+   A timed, full-screen interview simulation. A problem appears on screen. You have
+   45 minutes to think out loud (your typed notes are recorded). At the end, the AI
+   gives structured feedback: communication clarity, correctness, edge case handling,
+   and code quality — just like a real FAANG interviewer would.
+
+5. Compare Multiple Approaches
+   For a given problem, show 2-3 different valid approaches side by side (e.g. Brute
+   Force vs. Optimized vs. One-Pass). Each approach is explained step-by-step, with
+   trade-offs clearly explained. Helps users understand WHY one is preferred in an
+   interview setting.
+
+6. Complexity Visualizer
+   An interactive chart that visually shows Big-O complexity curves (O(1), O(log n),
+   O(n), O(n²), etc.) overlaid with the current solution's complexity. Makes abstract
+   complexity analysis intuitive and memorable.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CODING PRACTICE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. In-App Code Editor with Run & Test
+   An embedded code editor (like Monaco, same one used in VS Code) where users
+   can write their solution, run it against test cases, and see if it passes — all
+   without leaving LeetMind. Supports multiple languages.
+
+8. AI Code Review
+   After the user writes their solution in the in-app editor, an AI reviewer looks
+   at it and gives honest feedback: Is it production-quality? Any edge cases missed?
+   Any naming or style issues? What would a Google interviewer say about this code?
+
+9. Hint System (Progressive Hints)
+   Instead of showing the full solution, offer a 3-level progressive hint system:
+   Hint 1: Nudges you toward the right data structure.
+   Hint 2: Tells you the core insight.
+   Hint 3: Shows a code skeleton.
+   This trains real problem-solving, not just memorization.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SYSTEM DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10. System Design Deep Dives
+    System Design is a major part of senior FAANG interviews. Enter a prompt like
+    "Design Twitter" or "Design a URL shortener" and LeetMind walks you through it
+    step-by-step: requirements gathering, capacity estimation, high-level architecture,
+    component deep-dives, trade-offs, and failure modes.
+
+11. System Design Diagram Generator
+    Automatically generates a simple architecture diagram (components, arrows, databases,
+    queues, load balancers) as part of the system design explanation. Visual diagrams
+    are critical in real interviews and help retention.
+
+12. Tech Stack Comparisons
+    "When would you use Redis vs. Memcached?" "SQL vs. NoSQL for this use case?"
+    Generates detailed, opinionated comparison breakdowns formatted for interview answers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BEHAVIORAL & SOFT SKILLS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+13. Behavioral Interview Coach (STAR Method)
+    Enter a behavioral question like "Tell me about a time you failed" and LeetMind
+    generates a strong STAR-format answer (Situation, Task, Action, Result) tailored
+    to FAANG culture. Users can also input their own experience and the AI helps
+    structure it into a compelling story.
+
+14. Company-Specific Prep Modules
+    Dedicated prep pages per company (Google, Amazon, Microsoft, Meta, Apple).
+    Covers: their interview process, their culture (e.g. Amazon Leadership Principles),
+    most-asked questions, and what interviewers at that company look for.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROGRESS & GAMIFICATION - Not required
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+15. User Progress Dashboard
+    A personal dashboard showing: topics studied, problems completed, streak days,
+    weak areas to revisit, and estimated "interview readiness score" based on coverage
+    of key topics.
+
+16. Daily Challenge
+    One new problem or topic every day. Completing it maintains a streak (like Duolingo).
+    Daily challenges are algorithmically chosen based on the user's weak spots.
+
+17. Skill Radar Chart
+    A visual radar/spider chart showing proficiency across key areas: Arrays, Trees,
+    Graphs, DP, System Design, Behavioral, etc. Users can instantly see where their
+    gaps are and focus their prep accordingly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTENT & REFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+18. Cheat Sheet Generator
+    Generate a one-page, print-ready cheat sheet for any topic (e.g. "Graph Algorithms"
+    or "Java Collections API"). Perfect to review the night before an interview.
+    Formatted cleanly and downloadable as PDF.
+
+19. Complexity Quick-Reference Card
+    A persistent reference card showing time/space complexity of all common operations
+    for Arrays, HashMaps, Trees, Graphs, Heaps, etc. Something users can keep open
+    as a side panel while practicing.
+
+20. Glossary & Concept Explainer
+    A searchable dictionary of CS terms and concepts. Type "Dijkstra's Algorithm" or
+    "CAP Theorem" and get a clear, concise explanation formatted for interview recall —
+    not a textbook dump.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOCIAL & ACCOUNTABILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+21. Study Plan Generator
+    Input your target company, role level (junior/mid/senior), and available weeks
+    until interview. LeetMind generates a personalized day-by-day study plan
+    covering all required topics in the right order with links to each resource.
+
+22. Shareable Solution Cards
+    Generate a beautifully formatted shareable card (like a social media post) of
+    a problem solution with the approach and complexity — for sharing on LinkedIn or
+    Twitter to document your prep journey publicly.
+
