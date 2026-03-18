@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer, Compass } from 'lucide-react';
-import { LeetMindResponse } from '../types';
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Copy, Unlock, Zap, Lightbulb, Trophy, BookOpen, ArrowUp, ArrowDown, Printer, Compass, Code } from 'lucide-react';
+import { LeetMindResponse, Language } from '../types';
 import { printSolution } from '../utils/printUtils';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Maximize2, Minimize2, X } from 'lucide-react';
+import { CodeEditor } from './CodeEditor';
+import { HintSystem } from './HintSystem';
+import { ComplexityChart } from './ComplexityChart';
+
 interface LearningExperienceProps {
   data: Partial<LeetMindResponse>;
   onReset: () => void;
@@ -209,6 +213,11 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
           </p>
         </motion.div>
 
+        {/* Hint System */}
+        {data.problemTitle && data.approach && (
+          <HintSystem problemTitle={data.problemTitle} approach={data.approach} />
+        )}
+
         {/* Progress Bar */}
         <div className="sticky top-4 z-10 bg-[var(--color-bg)]/80 backdrop-blur-md py-4 border-b border-white/10">
           <div className="flex justify-between items-center mb-2 font-mono text-sm text-gray-400">
@@ -283,6 +292,16 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
                     <span className="text-[var(--color-accent)] font-mono text-sm">{(index + 1).toString().padStart(2, '0')}</span>
                     {step.title || "Generating step..."}
                   </h3>
+                  
+                  {index === 0 && data.timeComplexity && (
+                    <div className="mb-6">
+                      <ComplexityChart 
+                        activeComplexityKey={data.timeComplexity} 
+                        title="Time Complexity" 
+                      />
+                    </div>
+                  )}
+
                   <p className="text-gray-400 mb-6 leading-relaxed">
                     {step.explanation}
                     {isStreaming && index === steps.length - 1 && (
@@ -399,7 +418,7 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
               )}
             </div>
 
-            {/* Full Solution Reveal */}
+            {/* Full Solution & Extras */}
             <div className="pt-8">
               {!showFullSolution ? (
                 <button
@@ -414,8 +433,13 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
                   animate={{ opacity: 1, height: 'auto' }}
                   className="rounded-2xl overflow-hidden border border-white/20 bg-[#0a0a0a]"
                 >
-                  <div className="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/10">
-                    <span className="font-mono text-sm text-gray-400">Optimal Solution</span>
+                  <div className="flex items-center justify-between px-6 bg-white/5 border-b border-white/10">
+                    <div className="flex gap-4">
+                      <button className="px-1 py-4 font-mono text-sm text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]">
+                        Optimal Solution
+                      </button>
+                      {/* Code Editor Tab would go here if we wanted tabs, but let's just show the editor natively below the solution for clarity, or as a practice area */}
+                    </div>
                     <button
                       onClick={handleCopy}
                       className="flex items-center gap-2 text-sm font-mono text-gray-400 hover:text-white transition"
@@ -440,6 +464,30 @@ export function LearningExperience({ data, onReset, onExploreNext, isStreaming }
                 </motion.div>
               )}
             </div>
+
+            {/* In-App Code Editor */}
+            {showFullSolution && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="pt-8 space-y-4"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--color-secondary)]/20 flex items-center justify-center text-[var(--color-secondary)]">
+                    <Code className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-display font-bold text-white">Practice Area</h4>
+                    <p className="text-sm font-mono text-gray-400">Implement and test your own solution</p>
+                  </div>
+                </div>
+                <CodeEditor 
+                  language={data.language as Language || 'Python'} 
+                  initialCode={`// Write your ${data.language || 'code'} solution here...\n\n`} 
+                />
+              </motion.div>
+            )}
 
             {/* Next Steps */}
             {data.nextSteps && data.nextSteps.length > 0 && (
